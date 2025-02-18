@@ -12,7 +12,7 @@ There are three files with data: train.csv, validation.csv (validation set infro
 We have divided all US territory into KMA (Key Market Regions). These regions grouped by similar market conditions that are inside each market. Try to enhance the current Rate Engine by pushing knowledge about origin and destination KMA into model. 
 The dataset contains the following features: the number of miles of the route, the type of the transport (there are three main types of transport), used for transporting the cargo, the weight of the cargo, the date when the cargo was picked up, the KMA origin point and the KMA destination point.
 
-Try to beat our prediction accuracy (MAPE), we are expecting less than 9%.
+Try to beat our prediction accuracy (MAPE), we are expecting less than 10%.
 
 Please send estimate your validation MAPE, the predictions for the test.csv and don't forget to attach your code.
 
