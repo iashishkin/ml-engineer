@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from model import Model
+from src.model import Model
 
 
 def loss(real_rates, predicted_rates):
