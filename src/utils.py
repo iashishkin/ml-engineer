@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import yaml
 import warnings
 
 
@@ -118,3 +119,102 @@ class CallbackLogger(BaseLogger):
             self.logger.log(self.logging_levels[level.lower()], msg, **kwargs)
         else:
             self.logger.log(logging.NOTSET, msg, **kwargs)
+
+
+def get_log_level(
+        level: str | int
+) -> int:
+    """
+    Convert log level from string or integer code.
+
+    Args:
+        level (str | int): Log level as string or integer code.
+
+    Returns:
+        int: Corresponding logging level.
+
+    Raises:
+        ValueError: If the log level is invalid.
+    """
+    if isinstance(level, int):
+        if level in logging._levelToName:
+            return level
+        raise ValueError(f"Invalid integer log level: {level}")
+
+    if isinstance(level, str):
+        level = level.lower()
+        if level not in BaseLogger.logging_levels:
+            raise ValueError(f"Invalid string log level: '{level}'. Choose from: {list(BaseLogger.logging_levels.keys())}")
+        return BaseLogger.logging_levels[level]
+
+
+    raise TypeError(f"Unsupported log level type: {type(level)}")
+
+
+def get_callback_logger(
+        log_path: str | os.PathLike,
+        level: str | int = "info",
+        mode: str = "a",
+        encoding: str = "utf-8"
+) -> CallbackLogger:
+    """
+    Initialize a CallbackLogger and add a file handler.
+
+    Args:
+        log_path (str | os.PathLike): Path to the log file. Must end with '.log'.
+        level (str | int, optional): Logging level as a string (e.g., 'info', 'debug')
+            or an integer code (e.g., 10). Defaults to 'info'.
+        mode (str, optional): File open mode for the log file. Defaults to 'a' (append mode).
+        encoding (str, optional): Encoding used for the log file. Defaults to 'utf-8'.
+
+    Returns:
+        CallbackLogger: Configured logger instance with the specified log level and file handler.
+
+    Raises:
+        ValueError: If `log_path` is not a valid file path ending with '.log'.
+        TypeError: If `log_level` is not a valid string or integer.
+    """
+    # Validate log_path
+    if not isinstance(log_path, str) or not log_path.endswith(".log"):
+        raise ValueError("`log_path` must be a valid string ending with '.log'.")
+
+    # Ensure the directory exists
+    log_dir = os.path.dirname(log_path)
+    if log_dir and not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+
+    # Convert log level to integer
+    log_level_int = get_log_level(level)
+
+    # Initialize logger
+    logger = CallbackLogger(level=log_level_int, )
+    logger.add_file_handler(log_path, mode=mode, encoding=encoding)
+    return logger
+
+
+def load_config(config_path: str, required_keys: list[str] = None) -> dict:
+    """
+    Load YAML configuration file and validate required keys.
+
+    Args:
+        config_path (str): Path to the YAML config file.
+        required_keys (list[str], optional): List of required keys to validate. Defaults to None.
+
+    Returns:
+        dict: Loaded configuration.
+
+    Raises:
+        ValueError: If required keys are missing.
+    """
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+
+    if required_keys:
+        missing_keys = [key for key in required_keys if key not in config]
+        if missing_keys:
+            raise ValueError(f"Missing required config keys: {missing_keys}")
+
+    return config
