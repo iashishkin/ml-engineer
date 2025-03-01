@@ -431,6 +431,15 @@ def preprocess_data(
         logger.critical(f"Failed to load data: {e}")
         raise BrokenPipeError
 
+    # enhance features
+    logger.info("Enhancing data ...")
+    data["pickup_date"] = pd.to_datetime(data["pickup_date"], format="%Y-%m-%d %H:%M:%S")
+    data["pickup_year"] = data["pickup_date"].dt.year
+    data["pickup_month"] = data["pickup_date"].dt.month
+    data["pickup_day"] = data["pickup_date"].dt.day
+    data["pickup_hour"] = data["pickup_date"].dt.hour
+    data["pickup_weekday"] = data["pickup_date"].dt.weekday
+
     # Prepare columns to use
     use_columns = use_features.copy()
     y_data = None
