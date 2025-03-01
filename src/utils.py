@@ -71,6 +71,8 @@ class CallbackLogger(BaseLogger):
         self._remove_existing_handlers()
         self._set_stream_handler()
 
+        self.formatter = logging.Formatter(fmt=self.logformat, datefmt=self.time_format)
+
     def _remove_existing_handlers(self):
         while self.logger.hasHandlers():
             self.logger.removeHandler(self.logger.handlers[0])
@@ -119,6 +121,16 @@ class CallbackLogger(BaseLogger):
             self.logger.log(self.logging_levels[level.lower()], msg, **kwargs)
         else:
             self.logger.log(logging.NOTSET, msg, **kwargs)
+
+    def set_new_formatter(self, formatter: logging.Formatter):
+        """Apply a new formatter to all existing handlers."""
+        for handler in self.logger.handlers:
+            handler.setFormatter(formatter)
+
+    def set_default_formatter(self):
+        """Reset all handlers to use the default formatter."""
+        for handler in self.logger.handlers:
+            handler.setFormatter(self.default_formatter)
 
 
 def get_log_level(
