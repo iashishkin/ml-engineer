@@ -415,11 +415,9 @@ def preprocess_data(
     # Validate input paths and parameters
     if not os.path.exists(src_path):
         logger.critical(f"Data file not found: {src_path}")
-        raise FileNotFoundError(f"Data file not found: {src_path}")
 
     if not use_features or not isinstance(use_features, list):
         logger.critical("`use_features` must be a non-empty list.")
-        raise ValueError("`use_features` must be a non-empty list.")
 
 
     # Load data
@@ -439,6 +437,9 @@ def preprocess_data(
     data["pickup_day"] = data["pickup_date"].dt.day
     data["pickup_hour"] = data["pickup_date"].dt.hour
     data["pickup_weekday"] = data["pickup_date"].dt.weekday
+
+    data["pickup_ts"] = data["pickup_date"].apply(lambda x: int(x.timestamp() * 1000))
+    data["pickup_year_month"] = data["pickup_date"].dt.to_period("M")
 
     # Prepare columns to use
     use_columns = use_features.copy()
