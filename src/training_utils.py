@@ -250,6 +250,13 @@ class ConfigurableColumnTransformer:
 
     @property
     def transformers(self):
+        """
+        Get the list of transformers instances.
+
+        Returns:
+            list: The list of transformers instances.
+        """
+
         return self.__transformers
 
     def fit(self, X: pd.DataFrame, y=None):
@@ -420,7 +427,10 @@ def apply_pipeline(
     for transformer in pipeline:
         if not hasattr(transformer, "transform"):
             logger.critical("All elements in pipeline must have a 'transform' method.")
+
         X_transformed = transformer.transform(X_transformed)
+        logger.debug(f"Applied {transformer.transform_names} to columns {transformer.matching_cols}")
+
     return X_transformed
 
 
@@ -454,11 +464,13 @@ def train_lgb_model(
     # load data
     X_train = load_dataframe_from_npz(
         os.path.join(train_src_path, "features.npz"),
-        use_cols=use_features
+        use_cols=use_features,
+        callbacks=callbacks
     )
     y_train = load_dataframe_from_npz(
         os.path.join(train_src_path, "target.npz"),
-        use_cols=[target_col]
+        use_cols=[target_col],
+        callbacks=callbacks
     ).values.ravel()
     
 
@@ -487,6 +499,7 @@ def train_lgb_model(
         X=X_train,
         callbacks=callbacks
     )
+
     # create dataset
     train_dataset = lgb.Dataset(
         X_train_transformed,
@@ -510,6 +523,8 @@ def train_lgb_model(
 
     if val_src_path is None:
 
+        logger.warning("valid data is not specified; early stop disabled")
+
         # train model
         model = lgb.train(
             model_params,
@@ -528,13 +543,17 @@ def train_lgb_model(
 
     else:
 
+        logger.warning("valid data is specified; early stop enabled")
+
         X_val = load_dataframe_from_npz(
             os.path.join(val_src_path, "features.npz"),
-            use_cols=use_features
+            use_cols=use_features,
+            callbacks=callbacks
         )
         y_val = load_dataframe_from_npz(
             os.path.join(val_src_path, "target.npz"),
-            use_cols=[target_col]
+            use_cols=[target_col],
+            callbacks=callbacks
         ).values.ravel()
         
 
