@@ -5,6 +5,10 @@ import yaml
 import warnings
 
 
+import numpy as np
+import pandas as pd
+
+
 class BaseLogger:
     logging_levels = {
         "debug": logging.DEBUG,
@@ -230,3 +234,112 @@ def load_config(config_path: str, required_keys: list[str] = None) -> dict:
             raise ValueError(f"Missing required config keys: {missing_keys}")
 
     return config
+
+
+def save_dataframe_to_npz(
+        data: pd.DataFrame | pd.Series,
+        dest_path: str,
+        callbacks: dict = None
+):
+    """
+    Save a pandas DataFrame to an .npz file efficiently with validity checks.
+
+    Args:
+        data (pd.DataFrame | pd.Series): The DataFrame or Series to save.
+        dest_path (str): Path to the output .npz file.
+        callbacks (dict, optional): Dictionary of callback functions. Defaults to None.
+
+    Raises:
+        ValueError: If invalid inputs are provided or conversion fails.
+        IOError: If the file cannot be written.
+    """
+
+    if callbacks is None:
+        callbacks = dict()
+
+    logger = callbacks.get("logging_callback", BaseLogger())
+
+    # Validity checks
+    if not isinstance(data, (pd.DataFrame, pd.Series)):
+        logger.critical("Input `df` must be a pandas DataFrame or Series.")
+    if not isinstance(dest_path, str) or not dest_path.endswith(".npz"):
+        logger.critical("`file_path` must be a valid string ending with '.npz'.")
+    if data.empty:
+        logger.critical("DataFrame is empty. Nothing to save.")
+
+    arrays = {}
+
+    # Handle Series
+    if isinstance(data, pd.Series):
+        try:
+            arrays[data.name ] = data.to_numpy()
+        except Exception as e:
+            logger.critical(f"Failed to process data: {e}")
+
+    # Handle DataFrame
+    if isinstance(data, pd.DataFrame):
+        for col in data.columns:
+
+            try:
+                arrays[col] = data[col].values
+            except Exception as e:
+                logger.critical(f"Failed to process column '{col}': {e}")
+
+
+    # Save all arrays into an NPZ archive
+    try:
+        np.savez_compressed(dest_path, **arrays)
+        logger.debug(f"data successfully saved to '{dest_path}'.")
+    except IOError as e:
+        logger.critical(f"Failed to write NPZ file: {e}")
+
+
+def load_dataframe_from_npz(
+        src_path: str | os.PathLike,
+        use_cols: list = None,
+        callbacks: dict = None
+) -> pd.DataFrame:
+    """
+    Load a DataFrame from a compressed .npz file.
+
+    This function reads a .npz file containing arrays (one per column) and converts them into a pandas DataFrame.
+    Optionally, only a subset of columns specified by `use_cols` is loaded.
+
+    Args:
+        src_path (str | os.PathLike): The path to the .npz file.
+        use_cols (list, optional): List of column names to load. If None, all columns are loaded.
+        callbacks (dict, optional): Dictionary containing callback functions, including a 'logging_callback'.
+
+    Returns:
+        pd.DataFrame: The DataFrame constructed from the .npz file.
+
+    Raises:
+        BrokenPipeError: If loading the .npz file fails.
+    """
+    if callbacks is None:
+        callbacks = dict()
+
+    logger = callbacks.get("logging_callback", BaseLogger())
+
+    # Validity checks
+    if not isinstance(src_path, (str, os.PathLike)) or not src_path.endswith(".npz"):
+        logger.critical("`src_path` must be a valid string ending with '.npz'.")
+
+    try:
+        data = np.load(src_path, allow_pickle=True)
+    except Exception as e:
+        logger.critical(f"Failed to load data: {e}")
+        raise BrokenPipeError
+
+    if use_cols is None:
+        logger.warning("use_cols is None; all data columns will be loaded")
+        use_cols = list(data.keys())
+
+    logger.debug(f"Loading data from {src_path}")
+
+    data_fetched = {}
+    for col in use_cols:
+        data_fetched[col] = data[col]
+
+    df_fetched = pd.DataFrame(data_fetched)
+    return df_fetched

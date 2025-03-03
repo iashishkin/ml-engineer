@@ -6,7 +6,7 @@ import pandas as pd
 
 from numbers import Real
 
-from src.utils import BaseLogger, CallbackLogger
+from src.utils import BaseLogger, save_dataframe_to_npz
 
 
 def process_missing_data(
@@ -340,64 +340,6 @@ def filter_data(
     logger.warning(f"All filters will filter {final_mask.mean(): .6%} of values")
 
     return data.loc[final_mask]
-
-
-def save_dataframe_to_npz(
-        data: pd.DataFrame | pd.Series,
-        dest_path: str,
-        callbacks: dict = None
-):
-    """
-    Save a pandas DataFrame to an .npz file efficiently with validity checks.
-
-    Args:
-        data (pd.DataFrame | pd.Series): The DataFrame or Series to save.
-        dest_path (str): Path to the output .npz file.
-        callbacks (dict, optional): Dictionary of callback functions. Defaults to None.
-
-    Raises:
-        ValueError: If invalid inputs are provided or conversion fails.
-        IOError: If the file cannot be written.
-    """
-
-    if callbacks is None:
-        callbacks = dict()
-
-    logger = callbacks.get("logging_callback", BaseLogger())
-
-    # Validity checks
-    if not isinstance(data, (pd.DataFrame, pd.Series)):
-        logger.critical("Input `df` must be a pandas DataFrame or Series.")
-    if not isinstance(dest_path, str) or not dest_path.endswith(".npz"):
-        logger.critical("`file_path` must be a valid string ending with '.npz'.")
-    if data.empty:
-        logger.critical("DataFrame is empty. Nothing to save.")
-
-    arrays = {}
-
-    # Handle Series
-    if isinstance(data, pd.Series):
-        try:
-            arrays[data.name ] = data.to_numpy()
-        except Exception as e:
-            logger.critical(f"Failed to process data: {e}")
-
-    # Handle DataFrame
-    if isinstance(data, pd.DataFrame):
-        for col in data.columns:
-
-            try:
-                arrays[col] = data[col].values
-            except Exception as e:
-                logger.critical(f"Failed to process column '{col}': {e}")
-
-
-    # Save all arrays into an NPZ archive
-    try:
-        np.savez_compressed(dest_path, **arrays)
-        logger.debug(f"data successfully saved to '{dest_path}'.")
-    except IOError as e:
-        logger.critical(f"Failed to write NPZ file: {e}")
 
 
 def preprocess_data(

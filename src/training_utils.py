@@ -10,59 +10,8 @@ import lightgbm as lgb
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.exceptions import NotFittedError
 
-from src.utils import BaseLogger
+from src.utils import BaseLogger, load_dataframe_from_npz
 from scripts.train import loss
-
-
-def load_dataframe_from_npz(
-        src_path: str | os.PathLike,
-        use_cols: list = None,
-        callbacks: dict = None
-) -> pd.DataFrame:
-    """
-    Load a DataFrame from a compressed .npz file.
-
-    This function reads a .npz file containing arrays (one per column) and converts them into a pandas DataFrame.
-    Optionally, only a subset of columns specified by `use_cols` is loaded.
-
-    Args:
-        src_path (str | os.PathLike): The path to the .npz file.
-        use_cols (list, optional): List of column names to load. If None, all columns are loaded.
-        callbacks (dict, optional): Dictionary containing callback functions, including a 'logging_callback'.
-
-    Returns:
-        pd.DataFrame: The DataFrame constructed from the .npz file.
-
-    Raises:
-        BrokenPipeError: If loading the .npz file fails.
-    """
-    if callbacks is None:
-        callbacks = dict()
-
-    logger = callbacks.get("logging_callback", BaseLogger())
-
-    # Validity checks
-    if not isinstance(src_path, (str, os.PathLike)) or not src_path.endswith(".npz"):
-        logger.critical("`src_path` must be a valid string ending with '.npz'.")
-
-    try:
-        data = np.load(src_path, allow_pickle=True)
-    except Exception as e:
-        logger.critical(f"Failed to load data: {e}")
-        raise BrokenPipeError
-
-    if use_cols is None:
-        logger.warning("use_cols is None; all data columns will be loaded")
-        use_cols = list(data.keys())
-
-    logger.debug(f"Loading data from {src_path}")
-
-    data_fetched = {}
-    for col in use_cols:
-        data_fetched[col] = data[col]
-
-    df_fetched = pd.DataFrame(data_fetched)
-    return df_fetched
 
 # Global registry for transforms
 # The keys are transform names used in configuration, and the values are functions that create a new instance.
