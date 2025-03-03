@@ -102,6 +102,31 @@ def process_duplicates(
     return data
 
 
+# Global registry for filters.
+# This dictionary maps filter type names (as strings) to their corresponding filter functions.
+FILTERS_REGISTRY = {}
+
+def register_filter(filter_type):
+    """
+    Decorator to register a filter function in the global FILTERS_REGISTRY.
+
+    This decorator adds the decorated filter function to the FILTERS_REGISTRY under the given filter_type key.
+    This enables dynamic lookup and configuration of filters based on their string identifiers.
+
+    Args:
+        filter_type (str): The identifier under which the filter function will be registered.
+
+    Returns:
+        function: A decorator that registers the filter function.
+    """
+    def decorator(func):
+        # Register the function in the global FILTERS_REGISTRY.
+        FILTERS_REGISTRY[filter_type] = func
+        return func
+    return decorator
+
+
+@register_filter("upper_constant")
 def __upper_constant_filter(
         values: np.ndarray,
         threshold: Real
@@ -124,6 +149,7 @@ def __upper_constant_filter(
     return values <= threshold
 
 
+@register_filter("lower_constant")
 def __lower_constant_filter(
         values: np.ndarray,
         threshold: Real
@@ -146,6 +172,7 @@ def __lower_constant_filter(
     return threshold <= values
 
 
+@register_filter("range")
 def __range_filter(
         values: np.ndarray,
         min_threshold: Real,
@@ -170,6 +197,7 @@ def __range_filter(
     return (min_threshold <= values) & (values <= max_threshold)
 
 
+@register_filter("upper_quantile")
 def __upper_quantile_filter(
         values: np.ndarray,
         q: float
@@ -197,6 +225,7 @@ def __upper_quantile_filter(
     return values <= threshold
 
 
+@register_filter("lower_quantile")
 def __lower_quantile_filter(
         values: np.ndarray,
         q: float
@@ -224,6 +253,7 @@ def __lower_quantile_filter(
     return values >= threshold
 
 
+@register_filter("category")
 def __categorical_filter(
         values: np.ndarray,
         categories: list | int | str
@@ -244,16 +274,6 @@ def __categorical_filter(
         array([ True, False,  True,  True, False])
     """
     return np.isin(values, categories)
-
-
-filters_map = {
-    "upper_constant": __upper_constant_filter,
-    "lower_constant": __lower_constant_filter,
-    "range": __range_filter,
-    "upper_quantile": __upper_quantile_filter,
-    "lower_quantile": __lower_quantile_filter,
-    "category": __categorical_filter
-}
 
 
 def filter_data(
@@ -302,7 +322,7 @@ def filter_data(
             logger.debug(f"Filtering col - {col} ...")
 
             # Get corresponding filter function
-            filter_func = filters_map.get(filter_type)
+            filter_func = FILTERS_REGISTRY.get(filter_type)
             if not filter_func:
                 logger.critical(f"Unsupported filter type: {filter_type}")
 

@@ -64,7 +64,31 @@ def load_dataframe_from_npz(
     df_fetched = pd.DataFrame(data_fetched)
     return df_fetched
 
+# Global registry for transforms
+# The keys are transform names used in configuration, and the values are functions that create a new instance.
+TRANSFORM_REGISTRY = {
+    "OrdinalEncoder": OrdinalEncoder
+}
 
+def register_transform(transform_type):
+    """
+    Decorator to register a transformer in the global TRANSFORM_REGISTRY.
+
+    This decorator adds the decorated transform class or function to the TRANSFORM_REGISTRY
+    under the provided transform_type key, so that it can be referenced by name in configuration.
+
+    Args:
+        transform_type (str): The name under which the transform will be registered.
+
+    Returns:
+        function: A decorator function that registers the transformer.
+    """
+    def decorator(func):
+        TRANSFORM_REGISTRY[transform_type] = func
+        return func
+    return decorator
+
+@register_transform("DummyTransform")
 class DummyTransform:
     """
     A dummy transformer that performs no changes on the data.
@@ -97,6 +121,7 @@ class DummyTransform:
         return X
 
 
+@register_transform("LogTransform")
 class LogTransform(DummyTransform):
     """
     A transformer that applies a logarithmic transformation to the input data.
@@ -129,6 +154,7 @@ class LogTransform(DummyTransform):
         return np.log(X + 1e-8)
 
 
+@register_transform("CategoryDTypeTransform")
 class CategoryDTypeTransform(DummyTransform):
     """
     A transformer that converts the input data to a categorical data type.
@@ -160,16 +186,6 @@ class CategoryDTypeTransform(DummyTransform):
             pd.DataFrame: The data with its dtype converted to "category".
         """
         return X.astype("category")
-
-
-# Global registry for transforms
-# The keys are transform names used in configuration, and the values are functions that create a new instance.
-TRANSFORM_REGISTRY = {
-    "DummyTransform": DummyTransform,
-    "LogTransform": LogTransform,
-    "OrdinalEncoder": OrdinalEncoder,
-    "CategoryDTypeTransform": CategoryDTypeTransform
-}
 
 
 class ConfigurableColumnTransformer:
@@ -406,7 +422,6 @@ def apply_pipeline(
             logger.critical("All elements in pipeline must have a 'transform' method.")
         X_transformed = transformer.transform(X_transformed)
     return X_transformed
-
 
 
 def train_lgb_model(
