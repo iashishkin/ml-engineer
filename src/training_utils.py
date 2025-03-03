@@ -10,7 +10,7 @@ import lightgbm as lgb
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.exceptions import NotFittedError
 
-from src.utils import BaseLogger, load_dataframe_from_npz
+from src.utils import BaseLogger, load_dataframe_from_npz, save_dataframe_to_npz
 from scripts.train import loss
 
 # Global registry for transforms
@@ -552,3 +552,81 @@ def train_lgb_model(
 
     with open(os.path.join(dest_dir, "model.pkl"), "wb") as mf:
         pickle.dump(model, mf)
+
+
+def inference_lgb_model(
+        data_src_path: os.PathLike | str,
+        model_src_path: os.PathLike | str,
+        dest_dir: os.PathLike | str,
+        use_features: list,
+        target_col: str,
+        load_target: bool = False,
+        callbacks: dict = None
+):
+
+    if callbacks is None:
+        callbacks = dict()
+
+    logger = callbacks.get("logging_callback", BaseLogger())
+
+    # load data
+    X_values = load_dataframe_from_npz(
+        os.path.join(data_src_path, "features.npz"),
+        use_cols=use_features,
+        callbacks=callbacks
+    )
+
+    if load_target:
+        try:
+            y_values = load_dataframe_from_npz(
+                os.path.join(data_src_path, "target.npz"),
+                use_cols=[target_col]
+            ).values.ravel()
+
+        except FileNotFoundError as e:
+            logger.critical(f"No target data. {e}")
+
+    # load feature transforms pipeline
+    try:
+        with open(os.path.join(model_src_path, "feature_transforms_pipeline.pkl"), "rb") as ef:
+            transforms_pipeline = pickle.load(ef)
+
+        logger.info(f"Load feature_transforms_pipeline from {model_src_path}.")
+
+    except FileNotFoundError as e:
+        logger.critical(f"Failed to load feature_transforms_pipeline from {model_src_path}. {e}")
+
+
+
+    # apply transforms
+    X_values_transformed = apply_pipeline(
+        pipeline=transforms_pipeline,
+        X=X_values,
+        callbacks=callbacks
+    )
+
+    # load model
+    try:
+        with open(os.path.join(model_src_path, "model.pkl"), "rb") as mf:
+            model = pickle.load(mf)
+
+        logger.info(f"Load model from {model_src_path}.")
+
+    except FileNotFoundError as e:
+        logger.critical(f"Failed to load fmodel from {model_src_path}. {e}")
+
+
+    # get estimation
+    y_est = model.predict(X_values, num_iteration=model.best_iteration)
+
+    if load_target:
+        est_loss = loss(y_values, y_est)
+        logger.info(f"loss - {est_loss}")
+    else:
+        logger.info("target data is not provided")
+
+    # save estimation
+    save_dataframe_to_npz(
+        data=pd.DataFrame({target_col: y_est}),
+        dest_path=os.path.join(dest_dir, "target_estimated.npz")
+    )
