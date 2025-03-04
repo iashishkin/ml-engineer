@@ -1,5 +1,11 @@
+echo "creating virtual environment ..."
+python3 -m venv .env
+
 source .env/bin/activate
 echo "virtual environment activated"
+
+echo "setting virtual environment ..."
+pip instal -r requirements.txt
 
 # preprocess data
 echo "preprocessing train data ..."
