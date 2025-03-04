@@ -25,7 +25,7 @@ def main(
     )
 
 
-    # Run preprocessing
+    # Run train
     train_lgb_model(
         **cfg,
         callbacks={"logging_callback": logger}
