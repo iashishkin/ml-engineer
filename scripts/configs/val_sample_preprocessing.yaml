@@ -1,0 +1,31 @@
+logging:
+  level: "debug"
+  mode: "w"
+  encoding: "utf-8"
+
+
+src_path: "dataset/validation.csv"
+dest_dir: "dataset/processed/val"
+
+target_col: "rate"
+use_features:
+  - "valid_miles"
+  - "transport_type"
+  - "weight"
+  - "pickup_date"
+  - "origin_kma"
+  - "destination_kma"
+  - "pickup_year"
+  - "pickup_month"
+  - "pickup_day"
+  - "pickup_hour"
+  - "pickup_weekday"
+  - "pickup_year_month"
+  - "pickup_ts"
+
+process_missed_data:
+  method: "report"
+  raise_error: true
+
+drop_duplicates: false
+filters: false

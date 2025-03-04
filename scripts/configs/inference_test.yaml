@@ -1,0 +1,22 @@
+logging:
+  level: "debug"
+  mode: "w"
+  encoding: "utf-8"
+
+data_src_path: "dataset/processed/test/"
+model_src_path: "models/enough_model_pipeline"
+dest_dir: "dataset/inference/test"
+
+load_target: false
+
+target_col: "rate"
+
+use_features:
+  - "valid_miles"
+  - "transport_type"
+  - "weight"
+  - "origin_kma"
+  - "destination_kma"
+  - "pickup_year"
+  - "pickup_month"
+  - "pickup_weekday"

@@ -1,0 +1,44 @@
+logging:
+  level: "debug"
+  mode: "w"
+  encoding: "utf-8"
+
+train_src_path: "dataset/processed/train/"
+val_src_path: "dataset/processed/val/"
+dest_dir: "models/enough_model_pipeline"
+
+target_col: "rate"
+use_features:
+  - "valid_miles"
+  - "transport_type"
+  - "weight"
+  - "origin_kma"
+  - "destination_kma"
+  - "pickup_year"
+  - "pickup_month"
+  - "pickup_weekday"
+
+categorical_features:
+  - "transport_type"
+  - "origin_kma"
+  - "destination_kma"
+#  - "pickup_year"
+#  - "pickup_month"
+  - "pickup_weekday"
+
+feature_transforms:
+  - pattern: "^(transport_type|origin_kma|destination_kma|pickup_weekday)$"
+    transforms: ["OrdinalEncoder", "CategoryDTypeTransform"]
+  - pattern: "^valid_miles$"
+    transforms: ["LogTransform"]
+
+model_params:
+  objective: "mae"
+  metric: "mae"
+  boosting_type: "gbdt"
+  learning_rate: 0.2
+  num_leaves: 512
+  n_estimators: 300
+  max_depth: -1
+  verbosity: -1
+  seed: 1234
