@@ -28,7 +28,7 @@ ml-engineer/
 └── requirements.txt          # Required libraries for setting up the virtual environment
 ```
 
-*Note*: Deprecated files (e.g., triain.py and model.py) are kept for reference but are no longer used in the main pipeline.
+*Note*: Deprecated files (e.g., train.py and model.py) are kept for reference but are no longer used in the main pipeline.
 
 
 ## Installation

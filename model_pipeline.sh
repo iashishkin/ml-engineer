@@ -5,7 +5,7 @@ source .env/bin/activate
 echo "virtual environment activated"
 
 echo "setting virtual environment ..."
-pip instal -r requirements.txt
+pip install -r requirements.txt
 
 # preprocess data
 echo "preprocessing train data ..."
