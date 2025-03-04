@@ -597,7 +597,6 @@ def inference_lgb_model(
         logger.critical(f"Failed to load feature_transforms_pipeline from {model_src_path}. {e}")
 
 
-
     # apply transforms
     X_values_transformed = apply_pipeline(
         pipeline=transforms_pipeline,
@@ -617,7 +616,7 @@ def inference_lgb_model(
 
 
     # get estimation
-    y_est = model.predict(X_values, num_iteration=model.best_iteration)
+    y_est = model.predict(X_values_transformed, num_iteration=model.best_iteration)
 
     if load_target:
         est_loss = loss(y_values, y_est)

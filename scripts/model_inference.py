@@ -24,7 +24,7 @@ def main(
         **logger_params
     )
 
-    # Run preprocessing
+    # Run inference
     inference_lgb_model(
         **cfg,
         callbacks={"logging_callback": logger}
@@ -40,40 +40,4 @@ if __name__ == "__main__":
     args = args_parser.parse_args()
 
     main(args.config)
-
-    # # args
-    # model_src_path = "../models/log_model/"
-    # data_src_path = "../dataset/processed/test_enhanced/"
-    # dest_path = "../dataset/inference/test"
-    #
-    # os.makedirs(dest_path)
-    #
-    # use_cols = [
-    #     'valid_miles',
-    #     'transport_type',
-    #     'weight',
-    #     'origin_kma',
-    #     'destination_kma',
-    #     'pickup_year',
-    #     'pickup_month',
-    #     'pickup_weekday'
-    # ]
-    # target_col = ["rate"]
-    #
-    # cat_features = ["transport_type", "origin_kma", "destination_kma", "pickup_year", "pickup_weekday"]
-    #
-    # features_oe = ["transport_type", "origin_kma", "destination_kma", "pickup_year", "pickup_weekday"]
-    # features_log = ["valid_miles"]
-    #
-    # model_params = {
-    #     "objective": "mae",
-    #     "metric": "mae",
-    #     "boosting_type": "gbdt",
-    #     "learning_rate": 0.2,
-    #     "num_leaves": 512,
-    #     "n_estimators": 300,
-    #     "max_depth": -1,
-    #     "verbosity": 1,
-    #     "seed": 1234
-    # }
 
