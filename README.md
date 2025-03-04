@@ -36,7 +36,7 @@ ml-engineer/
 1. **Clone the Repository:**
 
 ```commandline
-git clone <repository_url>
+git clone git@github.com:iashishkin/ml-engineer.git
 cd ml-engineer
 ```
 
