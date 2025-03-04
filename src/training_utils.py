@@ -397,6 +397,53 @@ def train_lgb_model(
         val_src_path: os.PathLike | str = None,
         callbacks: dict = None
 ):
+    """
+        Train a LightGBM model using preprocessed training data and an optional feature transformation pipeline.
+
+        This function performs the following steps:
+          1. Validates input paths and parameters.
+          2. Loads training features and target data from NPZ files.
+          3. Builds and applies a feature transformation pipeline. If no specific transformations
+             are provided, a default pipeline using a DummyTransform is used.
+          4. Creates a LightGBM dataset from the transformed features.
+          5. Trains a LightGBM model:
+               - If validation data is not provided, training is performed without early stopping.
+               - If validation data is provided, early stopping is enabled and validation metrics are logged.
+          6. Computes and logs training (and optionally validation) loss.
+          7. Saves training losses, the feature transformation pipeline, and the trained model to disk.
+
+        Args:
+            train_src_path (os.PathLike | str): Path to the directory containing training NPZ files
+                ("features.npz" and "target.npz").
+            dest_dir (os.PathLike | str): Destination directory where the trained model, transformation pipeline,
+                and training losses will be saved.
+            target_col (str): Name of the target column.
+            use_features (list): List of feature column names to use for training.
+            categorical_features (list): List of categorical feature column names.
+            model_params (dict): Dictionary of parameters for LightGBM model training.
+            feature_transforms (list, optional): List of transformation configurations for building a feature pipeline.
+                If None, a default pipeline with DummyTransform is used.
+            val_src_path (os.PathLike | str, optional): Path to the directory containing validation NPZ files.
+                If not provided, validation is disabled.
+            callbacks (dict, optional): Dictionary of callback functions (e.g., logging callbacks). Defaults to None.
+
+        Returns:
+            None
+
+        Side Effects:
+            - Trains a LightGBM model.
+            - Saves training losses to "training_losses.npz" in dest_dir.
+            - Saves the feature transformation pipeline to "feature_transforms_pipeline.pkl" in dest_dir.
+            - Saves the trained model to "model.pkl" in dest_dir.
+            - Logs training and validation losses using the provided logging callback.
+
+        Raises:
+            Critical errors are logged via the provided logging callback if:
+                - The training source path does not exist.
+                - `use_features` is not a non-empty list.
+                - Required data files cannot be loaded.
+        """
+
 
     if callbacks is None:
         callbacks = dict()
@@ -458,7 +505,15 @@ def train_lgb_model(
 
     training_losses = {"train": [], "val": []}
     def log_callback(env):
-        """Custom callback to store training and validation loss"""
+        """
+        Custom callback function to log training and validation loss.
+
+        This callback is used during LightGBM training to capture loss metrics for both training
+        and validation sets, and log them at each iteration.
+
+        Args:
+            env: A LightGBM callback environment containing training state information.
+        """
 
         msg = f"Iteration {env.iteration}; "
 
@@ -563,6 +618,40 @@ def inference_lgb_model(
         load_target: bool = False,
         callbacks: dict = None
 ):
+    """
+    Perform inference using a trained LightGBM model and a pre-saved feature transformation pipeline.
+
+    This function carries out the following steps:
+      1. Loads input features (and optionally target values) from NPZ files.
+      2. Loads the pre-saved feature transformation pipeline and applies it to the input features.
+      3. Loads the trained LightGBM model.
+      4. Uses the model to predict target values from the transformed features.
+      5. If target values are provided, computes and logs the prediction loss.
+      6. Saves the predicted target values to disk.
+
+    Args:
+        data_src_path (os.PathLike | str): Path to the directory containing input NPZ files
+            ("features.npz" and optionally "target.npz").
+        model_src_path (os.PathLike | str): Path to the directory containing the saved model and feature transformation pipeline.
+        dest_dir (os.PathLike | str): Destination directory where the inference output will be saved.
+        use_features (list): List of feature column names to use for inference.
+        target_col (str): Name of the target column.
+        load_target (bool, optional): If True, load target values from the data source to compute loss. Defaults to False.
+        callbacks (dict, optional): Dictionary of callback functions (e.g., logging callbacks). Defaults to None.
+
+    Returns:
+        None
+
+    Side Effects:
+        - Generates predictions for the input data using the trained model.
+        - Saves the predicted target values to "target_estimated.npz" in dest_dir.
+        - Logs the computed loss if target data is provided.
+
+    Raises:
+        Critical errors are logged via the provided logging callback if:
+            - The feature transformation pipeline or model cannot be loaded.
+            - The target file is missing when load_target is True.
+    """
 
     if callbacks is None:
         callbacks = dict()
