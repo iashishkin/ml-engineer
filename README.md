@@ -1,4 +1,4 @@
-# ml-engineer
+# ml-project-example
 **ml-engineer** is a modular machine learning project designed for data preprocessing, model training, and inference. 
 It includes Python scripts, a set of utilities, bash scripts for automating the pipeline, and Jupyter notebooks for 
 exploratory data analysis (EDA). Each stage of the pipeline is fully controlled by corresponding configuration files 
@@ -36,7 +36,7 @@ ml-engineer/
 1. **Clone the Repository:**
 
 ```commandline
-git clone git@github.com:iashishkin/ml-engineer.git
+git clone git@github.com:iashishkin/ml-project-example.git
 cd ml-engineer
 ```
 
@@ -51,7 +51,6 @@ source .env/bin/activate
 
 ```commandline
 pip install -r requirements.txt
-
 ```
 
 ## Usage
